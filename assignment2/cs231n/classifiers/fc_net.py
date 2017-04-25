@@ -216,7 +216,6 @@ class FullyConnectedNet(object):
 			self.dropout_param = {'mode': 'train', 'p': dropout}
 			if seed is not None:
 				self.dropout_param['seed'] = seed
-
 		# With batch normalization we need to keep track of running means and
 		# variances, so we need to pass a special bn_param object to each batch
 		# normalization layer. You should pass self.bn_params[0] to the forward pass
@@ -263,6 +262,7 @@ class FullyConnectedNet(object):
 		############################################################################
 		arg = X
 		cache_hist = {}
+		drops = {}
 		for i in range(1, self.num_layers):
 			w_ = 'W' + str(i)
 			b_ = 'b' + str(i)
@@ -271,6 +271,11 @@ class FullyConnectedNet(object):
 			else:
 				arf_out, cache_hist[i] = affine_relu_forward(arg, self.params[w_], self.params[b_])
 			arg = arf_out
+			if self.use_dropout:
+				arg, drops[i] = dropout_forward(arg, self.dropout_param)
+				
+				
+				
 		af_out, af_cache = affine_forward(arg, self.params['W' + str(self.num_layers)], self.params['b' + str(self.num_layers)])
 		scores = af_out
 
@@ -305,6 +310,9 @@ class FullyConnectedNet(object):
 		grads['W' + str(self.num_layers)] = a_w + self.reg * self.params['W' + str(self.num_layers)]
 		grads['b' + str(self.num_layers)] = a_b
 		for i in range(self.num_layers - 1, 0, -1):
+			if self.use_dropout:
+				a_x = dropout_backward(a_x, drops[i])
+			
 			if self.use_batchnorm:
 				a_x, a_w, a_b, dgamma, dbeta = affine_bn_relu_backward(a_x, cache_hist[i])
 				grads['gamma' + str(i)] = dgamma
