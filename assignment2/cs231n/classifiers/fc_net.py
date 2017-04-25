@@ -200,7 +200,7 @@ class FullyConnectedNet(object):
 			self.params['b' + str(i)] = np.zeros(dim_output)
 			
 			if use_batchnorm and i != self.num_layers:
-				self.params['gamma' + str(i)] = np.zeros(dim_output)
+				self.params['gamma' + str(i)] = np.ones(dim_output)
 				self.params['beta' + str(i)] = np.zeros(dim_output)
 
 		#pass
@@ -298,8 +298,8 @@ class FullyConnectedNet(object):
 		# of 0.5 to simplify the expression for the gradient.                      #
 		############################################################################
 		loss, d = softmax_loss(scores, y)
-		loss_reg = 0.5 * self.reg * (np.sum(self.params['W'+str(self.num_layers)]* self.params['W'+str(self.num_layers)]))
-		loss = loss + loss_reg
+		w_reg = 0.5 * self.reg * np.sum([np.sum(self.params[i] ** 2) for i in self.params.keys() if 'W' in i])
+		loss = loss + w_reg
 		
 		a_x, a_w, a_b = affine_backward(d, af_cache)
 		grads['W' + str(self.num_layers)] = a_w + self.reg * self.params['W' + str(self.num_layers)]
